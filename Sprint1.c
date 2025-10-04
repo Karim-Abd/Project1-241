@@ -58,7 +58,12 @@ int main() {
     for (int r = 0; r < ROWS; r++)
         for (int c = 0; c < COLS; c++)
             board[r][c] = ' ';
-
+            char playerAName[20], playerBName[20];
+    printf("Welcome to Connect Four!\n");
+    printf("Player A name: ");
+    scanf("%19s", playerAName);
+    printf("Player B name: ");
+    scanf("%19s", playerBName);
     char player = 'A';
     int moves = 0;
     int maxMoves = ROWS * COLS;
@@ -67,7 +72,12 @@ int main() {
 
     while (moves < maxMoves) {
         int col;
-        printf("\nPlayer %c, choose a column (1-7): ", player);
+      if (player == 'A')
+    printf("\nPlayer %s, choose a column (1-7): ", playerAName);
+    else
+    printf("\nPlayer %s, choose a column (1-7): ", playerBName);
+fflush(stdout);
+
         fflush(stdout);
 
     if (scanf(" %d", &col) != 1) {
