@@ -69,7 +69,7 @@ int main() {
         int col;
         printf("\nPlayer %c, choose a column (1-7): ", player);
 
-    if (scanf("%d", &col) != 1) {
+    if (scanf(" %d", &col) != 1) {
     int ch;
     while ((ch =getchar()) != '\n' && ch != EOF) {}
     printf("Invalid input! Please enter a number between 1 and 7.\n");
