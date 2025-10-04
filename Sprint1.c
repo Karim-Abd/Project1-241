@@ -62,20 +62,25 @@ int main() {
     char player = 'A';
     int moves = 0;
     int maxMoves = ROWS * COLS;
-
-    printf("CONNECT FOUR(Two Player)\n");
+    printf("Welcome to Connect Four!(Two Players)\n");
     printBoard(board);
 
     while (moves < maxMoves) {
         int col;
         printf("\nPlayer %c, choose a column (1-7): ", player);
-        scanf("%d", &col);
-        col--;
 
-        if (col < 0 || col >= COLS) {
-            printf("Invalid column. Try again.\n");
-            continue;
-        }
+    if (scanf("%d", &col) != 1) {
+    int ch;
+    while ((ch =getchar()) != '\n' && ch != EOF) {}
+    printf("Invalid input! Please enter a number between 1 and 7.\n");
+    continue;
+}
+    col--; 
+
+if (col < 0 || col >= COLS) {
+    printf("Invalid column. Please try again.\n");
+    continue;
+}
 
         int row = dropChecker(board, col, player);
         if (row == -1) {
