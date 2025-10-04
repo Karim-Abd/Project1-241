@@ -68,6 +68,7 @@ int main() {
     while (moves < maxMoves) {
         int col;
         printf("\nPlayer %c, choose a column (1-7): ", player);
+        fflush(stdout);
 
     if (scanf(" %d", &col) != 1) {
     int ch;
