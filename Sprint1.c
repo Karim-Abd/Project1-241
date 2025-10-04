@@ -13,7 +13,7 @@ void printBoard(char board[ROWS][COLS]) {
         }
         printf("\n");
     }
-    printf("-----------------\n");
+    printf("--------------\n");
     printf(" 1 2 3 4 5 6 7\n");
 }
 
