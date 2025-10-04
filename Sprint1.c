@@ -54,6 +54,7 @@ int checkWin(char board[ROWS][COLS], int row, int col, char player) {
 }
 
 int main() {
+    setvbuf(stdout, NULL, _IONBF, 0);
     char board[ROWS][COLS];
     for (int r = 0; r < ROWS; r++)
         for (int c = 0; c < COLS; c++)
