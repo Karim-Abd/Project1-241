@@ -61,6 +61,7 @@ int main() {
             board[r][c] = ' ';
             char playerAName[20], playerBName[20];
     printf("Welcome to Connect Four!\n");
+    fflush(stdout);
     printf("Player A name: ");
     scanf("%19s", playerAName);
     printf("Player B name: ");
