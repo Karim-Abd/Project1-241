@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>;
+#include <time.h>
 #define ROWS 6
 #define COLS 7
 
@@ -67,11 +67,12 @@ int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
     srand(time(NULL)); 
     char board[ROWS][COLS];
-    for (int r = 0; r < ROWS; r++)
-        for (int c = 0; c < COLS; c++)
-            board[r][c] = ' ';
-            char playerAName[20], playerBName[20];
-            int modes;
+    for (int r = 0; r < ROWS; r++){
+        for (int c = 0; c < COLS; c++){
+            board[r][c] = ' ';}
+    }
+    char playerAName[20], playerBName[20];
+    int modes;
     printf("Welcome to Connect Four!\n");
     fflush(stdout);
     printf("Select Mode: \n");
@@ -151,3 +152,4 @@ if (col < 0 || col >= COLS) {
     printf("\nIt's a draw!\n");
     return 0;
 }
+
