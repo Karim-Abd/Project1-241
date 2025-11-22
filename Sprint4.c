@@ -292,6 +292,8 @@ int main() {
     printf("4. Player vs Hard Bot \n");
     printf("Choice: ");
     scanf("%d", &modes);
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF) {}
     printf("Player A name: ");
     scanf("%19s", playerAName);
     if (modes < 1 || modes > 4) {
