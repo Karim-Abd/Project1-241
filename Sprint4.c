@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
 #define ROWS 6
 #define COLS 7
+#define PORT 4444
 
 // prints the board 
 void printBoard(char board[ROWS][COLS]) {
@@ -274,6 +280,106 @@ int HardBot(char b[ROWS][COLS], char bot, char opp, int depth){
     return bestCol;
 }
 
+typedef struct {
+    char (*board)[COLS];
+    char bot;
+    char opp;
+    int depth;
+    int result;
+} BotArgs;
+
+void* hardBotMT(void* arg) {
+    BotArgs* args = (BotArgs*)arg;
+    int best = HardBot(args->board, args->bot, args->opp, args->depth);
+    args->result = best;
+    return NULL;
+}
+
+// same base code for the board and logic but for mult
+void startMultiplayerServer() {
+    int server_fd, client_fd;
+    struct sockaddr_in address;
+    socklen_t addrlen = sizeof(address);
+
+    char board[ROWS][COLS];
+    for (int r = 0; r < ROWS; r++)
+        for (int c = 0; c < COLS; c++)
+            board[r][c] = ' ';
+
+    printf("Loading Player A\n");
+
+    // create the socket  
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    // bind 
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+
+    // listen for any connections to the created socket
+    listen(server_fd, 1);
+    printf("Server waiting on port %d...\n", PORT);
+
+    // accept client (playerb)
+    client_fd = accept(server_fd, (struct sockaddr *)&address, &addrlen);
+    printf("PlayerB connected!\n");
+
+    char currentPlayer = 'A';
+    int moves = 0;
+    int maxMoves = ROWS * COLS;
+
+    while (moves < maxMoves) {
+        printBoard(board);
+
+        if (currentPlayer == 'A') {
+            int col;
+            printf("\nPlayer A, choose a column (1–7): ");
+            scanf("%d", &col);
+            col--;
+
+            int row = dropChecker(board, col, 'A');
+            if (row == -1) {
+                printf("Column full. Try again.\n");
+                continue;
+            }
+
+            // update the board and current player 
+            write(client_fd, board, ROWS * COLS);
+            write(client_fd, &currentPlayer, 1);
+
+            if (checkWin(board, row, col, 'A')) {
+                printf("\nPlayer A wins!\n");
+                break;
+            }
+
+        } else { 
+            printf("\nPlayer B's turn...\n");
+
+            // update the board and current player 
+            write(client_fd, board, ROWS * COLS);
+            write(client_fd, &currentPlayer, 1);
+
+            int colB;
+            read(client_fd, &colB, sizeof(int));
+            int row = dropChecker(board, colB, 'B');
+
+            if (checkWin(board, row, colB, 'B')) {
+                printBoard(board);
+                printf("\nPlayer B wins!\n");
+                break;
+            }
+        }
+
+        currentPlayer = (currentPlayer == 'A') ? 'B' : 'A';
+        moves++;
+    }
+
+    close(client_fd);
+    close(server_fd);
+}
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -290,16 +396,25 @@ int main() {
     printf("2. Player vs Easy Bot \n");
     printf("3. Player vs Medium Bot \n");
     printf("4. Player vs Hard Bot \n");
+    printf("5. Multiplayer (Server) \n");
     printf("Choice: ");
     scanf("%d", &modes);
     int ch;
     while ((ch = getchar()) != '\n' && ch != EOF) {}
+
+    if (modes < 1 || modes > 5) {
+        printf("Invalid mode! Defaulting to Easy Bot.\n");
+        modes = 4;
+    }
+
+    if (modes == 5) {
+        startMultiplayerServer();
+        return 0;
+    }
+
     printf("Player A name: ");
     scanf("%19s", playerAName);
-    if (modes < 1 || modes > 4) {
-    printf("Invalid mode! Defaulting to Easy Bot.\n");
-    modes = 4;
-    }
+
     if (modes == 1) {
         printf("Player B name: ");
         scanf("%19s", playerBName);
@@ -313,9 +428,10 @@ int main() {
         printf("You are playing against %s\n", playerBName);
     }
     else if (modes == 4) {
-    snprintf(playerBName, sizeof(playerBName), "Hard Bot");
-    printf("You are playing against %s\n", playerBName);
+        snprintf(playerBName, sizeof(playerBName), "Hard Bot");
+        printf("You are playing against %s\n", playerBName);
     }
+
     char currentPlayer = 'A'; // 'A' = PlayerA, 'B' = Bot or PlayerB
     int moves = 0, maxMoves = ROWS * COLS;
     printBoard(board);
@@ -323,13 +439,22 @@ int main() {
     while (moves < maxMoves) {
         int col, row;
 
-        if ((modes == 2 || modes == 3||modes == 4) && currentPlayer == 'B') {
+        if ((modes == 2 || modes == 3 || modes == 4) && currentPlayer == 'B') {
             if (modes == 2)
                 col = EasyBot(board);
-            else if(modes == 3)
+            else if (modes == 3)
                 col = MediumBot(board, 'B', 'A');
-            else
-                col = HardBot(board,'B','A',5);
+            else {
+                pthread_t tid;
+                BotArgs args;
+                args.board = board;
+                args.bot = 'B';
+                args.opp = 'A';
+                args.depth = 5;
+                pthread_create(&tid, NULL, hardBotMT, &args);
+                pthread_join(tid, NULL);
+                col = args.result;
+            }
 
             row = dropChecker(board, col, 'B');
             printBoard(board);
@@ -342,8 +467,8 @@ int main() {
                 printf("\n%s, choose a column (1-7): ", playerBName);
 
             if (scanf("%d", &col) != 1) {
-                int ch;
-                while ((ch = getchar()) != '\n' && ch != EOF) {}
+                int ch2;
+                while ((ch2 = getchar()) != '\n' && ch2 != EOF) {}
                 printf("Invalid input! Try again.\n");
                 continue;
             }
